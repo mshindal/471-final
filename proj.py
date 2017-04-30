@@ -7,6 +7,8 @@ from random import uniform, seed
 import mpp
 from pdb import set_trace as d
 
+np.random.seed(15)
+
 def readInDataSet(fileName):
     content = []
     with open(fileName) as f:
@@ -111,15 +113,15 @@ def normalizeSets(trainingSet, testingSet):
         for x in range(0,len(testingSet[0])-1):
             testingSet[i][x] = (testingSet[i][x]-avg[x])/std[x]
 
-def knnEvaluationAtX(xs, trainingData, k,n, numClasses):
+def knnEvaluationAtX(xs, trainingData, k, numClasses):
     distances = np.zeros((len(trainingData),2),dtype='float')
     for i in range(0,len(trainingData)):
         sum=0
         for x in range(0,len(trainingData[0])-1):
-            sum += (xs[x]-trainingData[i][x])**n
+            sum += (xs[x]-trainingData[i][x])**2
        
         
-        sum = sum**(1/n)
+        sum = sum**(1/2)
         
         
         distances[i][0] = sum    
@@ -138,14 +140,18 @@ def knnEvaluationAtX(xs, trainingData, k,n, numClasses):
             highestCount = classSums[i]
     return predClass
     
-def knnEvaluationOnSet(ts, trainingData, k,n, numClasses):
+def knnEvaluationOnSet(ts, trainingData, classifierTuple):
+    k = classifierTuple[0]
+    numClasses = classifierTuple[1]
     accuracy = 0
     confusionMatrix = np.zeros((numClasses, numClasses), dtype = float)
     for i in range(0,len(ts)):
-        set = knnEvaluationAtX(ts[i], trainingData,k,n, numClasses)
-        
+        set = knnEvaluationAtX(ts[i], trainingData,k, numClasses)
+        if (set == ts[i][len(ts[i])-1]):
+            accuracy +=1
         confusionMatrix[ts[i][len(ts[i])-1]][set]+=1
-    return confusionMatrix
+    accuracy = accuracy / len(ts)
+    return confusionMatrix, accuracy
     
 def seperateData(data, numSets):
     numElements = int(len(data)/numSets)
@@ -160,17 +166,61 @@ def seperateData(data, numSets):
             newData[x][i] = data[x*numElements+i]
     return newData
     
+   
+    
+def splitSetAtIndex(g, i):
+    testingSet = g[i]
+    trainingSet =[]
+    for x in range(0,len(g)):
+        if (x!=i):            
+            for y in range(0,len(g[x])):
+                trainingSet.append(g[x][y])
+    return testingSet, trainingSet
+        
+def performCrossValidation(groups, classifierFunction, classifierTuple):
+    g = groups[:]
+    averageConfusionMatrix =0
+    averageAccuracy =0
+    for i in range(0,len(g)):
+        testingSet, trainingSet = splitSetAtIndex(g,i)          
+        normalizeSets(trainingSet, testingSet)
+        confMatRes, accRes = (classifierFunction(testingSet, trainingSet,classifierTuple))
+        averageConfusionMatrix += confMatRes
+        averageAccuracy+=accRes    
+    averageAccuracy/=len(g)
+    return averageConfusionMatrix, averageAccuracy
+
+    
+    
+def findBestKForKNN(groups, minK, maxK):
+    bestAccuracy = 0
+    bestConfusionMatrix =0
+    bestK =0
+    for i in range(minK, maxK):
+        confusionMatrix, accuracy = performCrossValidation(groups, knnEvaluationOnSet, (i,3))
+        if (accuracy > bestAccuracy):
+            bestK =i
+            bestAccuracy = accuracy
+            bestConfusionMatrix = confusionMatrix
+    return bestK, bestConfusionMatrix, bestAccuracy
 
 data = readInDataSet("post_opt.data")
-# print(data)
 #data = removeIncompleteSamples(data)
 #data = removeIncompleteFeatures(data)
 interpriteData(data)
 data = castData(data)
-d()
-mpp.classify(data)
-data = seperateData(data,4)
+data = seperateData(data,10)
+k,confusionMatrix, accuracy = findBestKForKNN(data, 1,15)
+print(k)
+print(accuracy)
+print(confusionMatrix)
+confusionMatrix, accuracy = performCrossValidation(data, mpp.classify_case_1, (3,))
+print('discriminant case 1:')
+print('accuracy: {}'.format(accuracy))
+print('confusion matrix:')
+print(confusionMatrix)
 
+#confusion, accuracy = (performCrossValidation(data, knnEvaluationOnSet, (5,3)))
 #
 '''
 data = np.delete(data, [7], axis=1)
