@@ -107,15 +107,15 @@ def normalizeSets(trainingSet, testingSet):
         for x in range(0,len(testingSet[0])-1):
             testingSet[i][x] = (testingSet[i][x]-avg[x])/std[x]
 
-def knnEvaluationAtX(xs, trainingData, k,n, numClasses):
+def knnEvaluationAtX(xs, trainingData, k, numClasses):
     distances = np.zeros((len(trainingData),2),dtype='float')
     for i in range(0,len(trainingData)):
         sum=0
         for x in range(0,len(trainingData[0])-1):
-            sum += (xs[x]-trainingData[i][x])**n
+            sum += (xs[x]-trainingData[i][x])**2
        
         
-        sum = sum**(1/n)
+        sum = sum**(1/2)
         
         
         distances[i][0] = sum    
@@ -134,11 +134,11 @@ def knnEvaluationAtX(xs, trainingData, k,n, numClasses):
             highestCount = classSums[i]
     return predClass
     
-def knnEvaluationOnSet(ts, trainingData, k,n, numClasses):
+def knnEvaluationOnSet(ts, trainingData, k, numClasses):
     accuracy = 0
     confusionMatrix = np.zeros((numClasses, numClasses), dtype = float)
     for i in range(0,len(ts)):
-        set = knnEvaluationAtX(ts[i], trainingData,k,n, numClasses)
+        set = knnEvaluationAtX(ts[i], trainingData,k, numClasses)
         
         confusionMatrix[ts[i][len(ts[i])-1]][set]+=1
     return confusionMatrix
@@ -156,14 +156,36 @@ def seperateData(data, numSets):
             newData[x][i] = data[x*numElements+i]
     return newData
     
-
+   
+    
+def splitSetAtIndex(g, i):
+    testingSet = g[i]
+    trainingSet =[]
+    for x in range(0,len(g)):
+        if (x!=i):            
+            for y in range(0,len(g[x])):
+                trainingSet.append(g[x][y])
+    return testingSet, trainingSet
+        
+def performCrossValidation(groups, k, numClasses):
+    g = groups[:]
+    average =0
+    for i in range(0,len(g)):
+        testingSet, trainingSet = splitSetAtIndex(g,i)          
+        normalizeSets(trainingSet, testingSet)
+        average += (knnEvaluationOnSet(testingSet, trainingSet, k, numClasses))
+    average /= len(g)
+    
+    return average
 data = readInDataSet("post_opt.data")
-print(data)
 #data = removeIncompleteSamples(data)
 #data = removeIncompleteFeatures(data)
 interpriteData(data)
 data = castData(data)
 data = seperateData(data,4)
+
+print(performCrossValidation(data, 3,3))
+
 
 #
 '''
