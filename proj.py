@@ -1,7 +1,11 @@
+#!/usr/bin/env python3
+
 import numpy as np
 import math
 import timeit
 from random import uniform, seed
+import mpp
+from pdb import set_trace as d
 
 def readInDataSet(fileName):
     content = []
@@ -158,11 +162,13 @@ def seperateData(data, numSets):
     
 
 data = readInDataSet("post_opt.data")
-print(data)
+# print(data)
 #data = removeIncompleteSamples(data)
 #data = removeIncompleteFeatures(data)
 interpriteData(data)
 data = castData(data)
+d()
+mpp.classify(data)
 data = seperateData(data,4)
 
 #
