@@ -2,7 +2,7 @@ import numpy as np
 import math
 import timeit
 from random import uniform, seed
-
+np.random.seed(15)
 def readInDataSet(fileName):
     content = []
     with open(fileName) as f:
@@ -184,16 +184,30 @@ def performCrossValidation(groups, classifierFunction, classifierTuple):
     averageAccuracy/=len(g)
     return averageConfusionMatrix, averageAccuracy
 
+    
+    
+def findBestKForKNN(groups, minK, maxK):
+    bestAccuracy = 0
+    bestConfusionMatrix =0
+    bestK =0
+    for i in range(minK, maxK):
+        confusionMatrix, accuracy = performCrossValidation(groups, knnEvaluationOnSet, (i,3))
+        if (accuracy > bestAccuracy):
+            bestK =i
+            bestAccuracy = accuracy
+            bestConfusionMatrix = confusionMatrix
+    return bestK, bestConfusionMatrix, bestAccuracy
 data = readInDataSet("post_opt.data")
 #data = removeIncompleteSamples(data)
 #data = removeIncompleteFeatures(data)
 interpriteData(data)
 data = castData(data)
-data = seperateData(data,2)
-
-confusion, accuracy = (performCrossValidation(data, knnEvaluationOnSet, (5,3)))
-print(confusion)
+data = seperateData(data,10)
+k,confusionMatrix, accuracy = findBestKForKNN(data, 1,15)
+print(k)
 print(accuracy)
+print(confusionMatrix)
+#confusion, accuracy = (performCrossValidation(data, knnEvaluationOnSet, (5,3)))
 
 #
 '''
