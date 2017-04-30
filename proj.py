@@ -134,7 +134,9 @@ def knnEvaluationAtX(xs, trainingData, k, numClasses):
             highestCount = classSums[i]
     return predClass
     
-def knnEvaluationOnSet(ts, trainingData, k, numClasses):
+def knnEvaluationOnSet(ts, trainingData, classifierTuple):
+    k = classifierTuple[0]
+    numClasses = classifierTuple[1]
     accuracy = 0
     confusionMatrix = np.zeros((numClasses, numClasses), dtype = float)
     for i in range(0,len(ts)):
@@ -169,17 +171,16 @@ def splitSetAtIndex(g, i):
                 trainingSet.append(g[x][y])
     return testingSet, trainingSet
         
-def performCrossValidation(groups, k, numClasses):
+def performCrossValidation(groups, classifierFunction, classifierTuple):
     g = groups[:]
     averageConfusionMatrix =0
     averageAccuracy =0
     for i in range(0,len(g)):
         testingSet, trainingSet = splitSetAtIndex(g,i)          
         normalizeSets(trainingSet, testingSet)
-        confMatRes, accRes = (knnEvaluationOnSet(testingSet, trainingSet, k, numClasses))
+        confMatRes, accRes = (classifierFunction(testingSet, trainingSet,classifierTuple))
         averageConfusionMatrix += confMatRes
-        averageAccuracy+=accRes
-    averageConfusionMatrix /= len(g)    
+        averageAccuracy+=accRes    
     averageAccuracy/=len(g)
     return averageConfusionMatrix, averageAccuracy
 
@@ -190,7 +191,7 @@ interpriteData(data)
 data = castData(data)
 data = seperateData(data,2)
 
-confusion, accuracy = (performCrossValidation(data, 5,3))
+confusion, accuracy = (performCrossValidation(data, knnEvaluationOnSet, (5,3)))
 print(confusion)
 print(accuracy)
 
