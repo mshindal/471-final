@@ -139,9 +139,11 @@ def knnEvaluationOnSet(ts, trainingData, k, numClasses):
     confusionMatrix = np.zeros((numClasses, numClasses), dtype = float)
     for i in range(0,len(ts)):
         set = knnEvaluationAtX(ts[i], trainingData,k, numClasses)
-        
+        if (set == ts[i][len(ts[i])-1]):
+            accuracy +=1
         confusionMatrix[ts[i][len(ts[i])-1]][set]+=1
-    return confusionMatrix
+    accuracy = accuracy / len(ts)
+    return confusionMatrix, accuracy
     
 def seperateData(data, numSets):
     numElements = int(len(data)/numSets)
@@ -169,23 +171,28 @@ def splitSetAtIndex(g, i):
         
 def performCrossValidation(groups, k, numClasses):
     g = groups[:]
-    average =0
+    averageConfusionMatrix =0
+    averageAccuracy =0
     for i in range(0,len(g)):
         testingSet, trainingSet = splitSetAtIndex(g,i)          
         normalizeSets(trainingSet, testingSet)
-        average += (knnEvaluationOnSet(testingSet, trainingSet, k, numClasses))
-    average /= len(g)
-    
-    return average
+        confMatRes, accRes = (knnEvaluationOnSet(testingSet, trainingSet, k, numClasses))
+        averageConfusionMatrix += confMatRes
+        averageAccuracy+=accRes
+    averageConfusionMatrix /= len(g)    
+    averageAccuracy/=len(g)
+    return averageConfusionMatrix, averageAccuracy
+
 data = readInDataSet("post_opt.data")
 #data = removeIncompleteSamples(data)
 #data = removeIncompleteFeatures(data)
 interpriteData(data)
 data = castData(data)
-data = seperateData(data,4)
+data = seperateData(data,2)
 
-print(performCrossValidation(data, 3,3))
-
+confusion, accuracy = (performCrossValidation(data, 5,3))
+print(confusion)
+print(accuracy)
 
 #
 '''
