@@ -6,6 +6,9 @@ import timeit
 from random import uniform, seed
 import mpp
 from pdb import set_trace as d
+import dtree
+import sys
+import bpnn
 
 np.random.seed(15)
 
@@ -231,7 +234,17 @@ print('discriminant case 3:')
 print('accuracy: {}'.format(accuracy))
 print('confusion matrix:')
 print(confusionMatrix)
-
+if len(sys.argv) == 2 and sys.argv[1] == '--anaconda':
+    confusionMatrix, accuracy = performCrossValidation(data, dtree.classify, (3,))
+    print('decision trees:')
+    print('accuracy: {}'.format(accuracy))
+    print('confusion matrix:')
+    print(confusionMatrix)
+    confusionMatrix, accuracy = performCrossValidation(data, bpnn.classify, (3,))
+    print('backpropagation:')
+    print('accuracy: {}'.format(accuracy))
+    print('confusion matrix:')
+    print(confusionMatrix)
 #confusion, accuracy = (performCrossValidation(data, knnEvaluationOnSet, (5,3)))
 #
 '''
