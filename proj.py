@@ -213,7 +213,7 @@ def calculateDistance(p1,p2):
     distance = 0
     for x in range(len(p1)-1):
         distance += (((p1[x])-(p2[x]))**2)
-    #distance = (distance**(1/2))
+    distance = (distance**(1/2))
     return distance
 def kmeans (data, numClasses, randomize):
     confusionMatrix = np.zeros((numClasses, numClasses), dtype = float)
@@ -282,14 +282,65 @@ def kmeans (data, numClasses, randomize):
                 kAvg[i] /= kCount[i]
         
         
-            
+    
     #now we check how accurate we were
     for i in range(len(data)):
         if (kId[i] == data[i][len(data[0])-1]):
             accuracy+=1
         confusionMatrix[data[i][len(data[0])-1]][kId[i]]+=1
+    accuracy /=len(data)
     return confusionMatrix, accuracy
         
+        
+def winnerTakesAll(data, numClasses, learningRate):
+    numFeatures = len(data[0])-1
+    confusionMatrix = np.zeros((numClasses, numClasses), dtype = float)
+    accuracy = 0
+    kAvg = np.zeros((numClasses,numFeatures))
+    kId = np.ones((len(data)))
+    kId *=-1
+    seed(15)
+    for i in range(numClasses):
+        for x in range(numFeatures):
+            kAvg[i][x] = uniform(5.,15.)
+    
+    epoch =0
+    start = 0
+    stop = 0
+    while True:
+        #first find class average
+        epoch+=1
+
+
+        changed = False
+
+        start = timeit.default_timer()
+        for i in range(len(data)):
+            bestDist = 999999999
+            bestIn=0
+            for x in range(numClasses):
+                distance = calculateDistance(data[i],kAvg[x])
+                if distance < bestDist:
+                    bestDist = distance
+                    bestIn = x
+            if (bestIn != kId[i]):
+                changed = True
+                
+            kId[i] = bestIn
+            for x in range(numFeatures):
+                kAvg[bestIn][x] = kAvg[bestIn][x] + learningRate*(data[i][x]-kAvg[bestIn][x])
+            
+        if (changed == False):
+            break
+    for i in range(len(data)):
+        if (data[i][numFeatures] == kId[i]):
+            accuracy +=1
+        
+        confusionMatrix[data[i][len(data[0])-1]][kId[i]]+=1
+    accuracy /= len(data)
+    return confusionMatrix, accuracy
+        
+
   
     
 data = readInDataSet("post_opt.data")
@@ -297,10 +348,24 @@ data = readInDataSet("post_opt.data")
 #data = removeIncompleteFeatures(data)
 interpriteData(data)
 data = castData(data)
-confusionMatrix, accuracy = kmeans(data, 3, False)
+
+
+
+
+
+confusionMatrix, accuracy = kmeans(data, 3, True)
 print("k-means:")
 print("confusion matrix:\n"+str(confusionMatrix)+"\naccuracy: "+str(accuracy))
+
+confusionMatrix, accuracy = winnerTakesAll(data, 3, .015)
+print("wta:")
+print("confusion matrix:\n"+str(confusionMatrix)+"\naccuracy: "+str(accuracy))
+
+
+
+
 data = seperateData(data,10)
+
 k,confusionMatrix, accuracy = findBestKForKNN(data, 1,15)
 print('kNN:')
 print('k: {}'.format(k))
