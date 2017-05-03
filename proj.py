@@ -207,11 +207,99 @@ def findBestKForKNN(groups, minK, maxK):
             bestConfusionMatrix = confusionMatrix
     return bestK, bestConfusionMatrix, bestAccuracy
 
+    
+    
+def calculateDistance(p1,p2):
+    distance = 0
+    for x in range(len(p1)-1):
+        distance += (((p1[x])-(p2[x]))**2)
+    #distance = (distance**(1/2))
+    return distance
+def kmeans (data, numClasses, randomize):
+    confusionMatrix = np.zeros((numClasses, numClasses), dtype = float)
+    accuracy=0
+    kAvg = np.zeros((numClasses,len(data[0])-1))
+    kCount = np.zeros((numClasses))
+    kId = np.zeros((len(data)))
+    #print ((kInd[0]))
+    #initial assignage
+    seed(3852)
+    for i in range(numClasses):
+        for x in range(len(data[0])-1):
+            kAvg[i][x] = uniform(5.,15.)
+    
+    epoch =0
+    emptySet = False
+    while True:
+        #first find class average
+        epoch+=1
+        
+        
+        changed = False
+        
+        for i in range(len(data)):
+            bestDist = 999999999
+            bestIn=0
+            for x in range(numClasses):
+                distance = calculateDistance(data[i],kAvg[x])
+                if distance < bestDist:
+                    bestDist = distance
+                    bestIn = x
+            if (bestIn != kId[i]):
+                changed = True
+            kId[i] = bestIn
+        if (changed == False):
+            if(emptySet == False):
+                break
+        
+        oldAvg = np.copy(kAvg)
+        #clear averages
+        for i in range(numClasses):
+            kCount[i] =0
+            for x in range(len(data[0])-1):
+                kAvg[i][x]=0
+                
+        #sum averages
+        for i in range(len(data)):
+            index = kId[i]
+            kCount[index]+=1
+            for x in range(len(data[0])-1):
+                kAvg[index][x]+=data[i][x]
+                
+                
+        emptySet = False
+        for i in range(numClasses):
+            if (kCount[i] ==0):
+                print("error empty set")
+                emptySet = True
+                if randomize == True:
+                    for x in range(len(data[0])-1):
+                        kAvg[i][x] = uniform(5.,15.)
+                else:
+                    for x in range(len(data[0])-1):
+                        kAvg[i][x] = oldAvg[i][x]
+            else:
+                kAvg[i] /= kCount[i]
+        
+        
+            
+    #now we check how accurate we were
+    for i in range(len(data)):
+        if (kId[i] == data[i][len(data[0])-1]):
+            accuracy+=1
+        confusionMatrix[data[i][len(data[0])-1]][kId[i]]+=1
+    return confusionMatrix, accuracy
+        
+  
+    
 data = readInDataSet("post_opt.data")
 #data = removeIncompleteSamples(data)
 #data = removeIncompleteFeatures(data)
 interpriteData(data)
 data = castData(data)
+confusionMatrix, accuracy = kmeans(data, 3, False)
+print("k-means:")
+print("confusion matrix:\n"+str(confusionMatrix)+"\naccuracy: "+str(accuracy))
 data = seperateData(data,10)
 k,confusionMatrix, accuracy = findBestKForKNN(data, 1,15)
 print('kNN:')
