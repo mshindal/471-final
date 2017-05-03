@@ -9,6 +9,7 @@ from pdb import set_trace as d
 import dtree
 import sys
 import bpnn
+import matplotlib.pyplot as plt
 
 np.random.seed(15)
 
@@ -186,7 +187,7 @@ def performCrossValidation(groups, classifierFunction, classifierTuple):
     averageAccuracy =0
     for i in range(0,len(g)):
         testingSet, trainingSet = splitSetAtIndex(g,i)          
-        normalizeSets(trainingSet, testingSet)
+        #normalizeSets(trainingSet, testingSet)
         confMatRes, accRes = (classifierFunction(testingSet, trainingSet,classifierTuple))
         averageConfusionMatrix += confMatRes
         averageAccuracy+=accRes    
@@ -199,12 +200,23 @@ def findBestKForKNN(groups, minK, maxK):
     bestAccuracy = 0
     bestConfusionMatrix =0
     bestK =0
+    kValues = []
+    accuracyValue = []
     for i in range(minK, maxK):
         confusionMatrix, accuracy = performCrossValidation(groups, knnEvaluationOnSet, (i,3))
+        kValues.append(i)
+        accuracyValue.append(accuracy)
         if (accuracy > bestAccuracy):
             bestK =i
             bestAccuracy = accuracy
             bestConfusionMatrix = confusionMatrix
+    plt.title('Accuracy of kNN, 10 cross fold validation')
+    plt.ylabel('value of k')
+    plt.ylim([0,1])
+    plt.xlabel('accuracy')
+    plt.plot(kValues, accuracyValue)
+    plt.savefig('knnPlot_K.png')
+    plt.cla()
     return bestK, bestConfusionMatrix, bestAccuracy
 
     
@@ -366,7 +378,7 @@ print("confusion matrix:\n"+str(confusionMatrix)+"\naccuracy: "+str(accuracy))
 
 data = seperateData(data,10)
 
-k,confusionMatrix, accuracy = findBestKForKNN(data, 1,15)
+k,confusionMatrix, accuracy = findBestKForKNN(data, 1,50)
 print('kNN:')
 print('k: {}'.format(k))
 print('accuracy: {}'.format(accuracy))
